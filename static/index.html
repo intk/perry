@@ -1,0 +1,48 @@
+
+<html>
+<head>
+    <script src="/static/jquery-2.1.1.min.js"></script>
+</head>
+<body>
+    <p>
+    Hey <span id="my-hash"></span>
+    </p>
+
+    <p>
+    Neighbours:
+        <ul id="neighbours">
+        </ul>
+        </p>
+
+    <script>
+        $(function() {
+            $.get("/data/my-hash", function(response) {
+                $("#my-hash").text($.parseJSON(response).myhash);
+            });
+
+            function getNeighbours() {
+                $.get("/data/neighbours", function(response) {
+                    var data = $.parseJSON(response);
+
+                    $("#neighbours").empty();
+
+                    data.forEach(function(n) {
+                        $("#neighbours").append("<li>" + n.nhash + "<ul id='neighbour-" + n.nhash + "'></ul></li>");
+
+                        $.get("/data/neighbour-data/" + n.nhash, function(response) {
+                            var data = $.parseJSON(response);
+
+                            data.forEach(function(d) {
+                                $("#neighbour-" + n.nhash).append("<li>" + d + "</li>");
+                            });
+                        });
+                    })
+
+                });
+            }
+            //setInterval(getNeighbours, 2000);
+            getNeighbours();
+        });
+    </script>
+</body>
+</html>
