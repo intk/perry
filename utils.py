@@ -3,7 +3,14 @@ import socket
 import hashlib
 import uuid
 
-def get_current_ip():
+class Details(object):
+
+    def __init__(self, uid, name):
+        self.uid = uid
+        self.name = name
+
+
+def get_localhost_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #gethostbyname(gethostname())
     s.connect(('8.8.8.8', 80))
     ip = s.getsockname()[0]
