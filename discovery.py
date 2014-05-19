@@ -18,6 +18,8 @@ class DiscoveryProtocol(DatagramProtocol):
 
     ANNOUNCE_INVERVAL = 5 # sec
 
+    TTL = 10
+
     def __init__(self, host, port, callback):
         self.host = host
         self.port = port
@@ -29,6 +31,8 @@ class DiscoveryProtocol(DatagramProtocol):
         self.transport.joinGroup(self.GROUP)
 
         #self.transport.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, True)
+
+        self.transport.setTTL(self.TTL)
 
         self.periodic_shout = LoopingCall(self.sendDatagram)
         self.periodic_shout.start(self.ANNOUNCE_INVERVAL)

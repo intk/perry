@@ -1,7 +1,6 @@
 from twisted.python import log
 from twisted.internet import defer, reactor
 
-from control import connect
 from settings import *
 
 
@@ -9,6 +8,7 @@ class ConnectionRegistry(object):
 
     def __init__(self):
 
+        self.pre_connections = []
         self.control_connections = []
         self.data_connections = []
 
@@ -16,29 +16,24 @@ class ConnectionRegistry(object):
         log.msg("Discovery callback called with args=%s" % (address,))
 
         host = address[0]
-        d = connect(self.control_factory, host, DATA_PORT)
-#        attempt = myEndpoint.connect(myFactory)
-#        reactor.callLater(30, attempt.cancel)
-        #d.addCallback(self.new_connection)
+
+        self.control_factory.connect(host, DATA_PORT)
 
     def new_connection(self, protocol):
-        log.msg("Connection created, self=%s" % self, system="ConnectionRegistry")
-        self.control_connections.append(protocol)
-
-        log.msg("%d connections" % len(self.control_connections))
+        log.msg("Connection created, asking for details, self=%s" % self)
+        self.pre_connections.append(protocol)
 
         d1 = defer.Deferred()
         d1.addCallback(lambda p : p.remoteGetDetails())
-        d1.addErrback(self.someError)
+        #d1.addErrback(self.someError)
         
         d2 = defer.Deferred()
         d2.addCallback(lambda p: p.remoteGetShared())
-        d2.addErrback(self.someError)
 
         d3 = defer.DeferredList([d1, d2], fireOnOneErrback=True) #consumeErrors=True, 
 
         d3.addCallback(self.handshakeDone)
-        d3.addErrback(self.someError)
+        d3.addErrback(lambda f: self.cantFinishHandshake(protocol, f))
 
         reactor.callLater(1, d1.callback, protocol)
         reactor.callLater(1, d2.callback, protocol)
@@ -49,9 +44,18 @@ class ConnectionRegistry(object):
         log.msg("AMP connection lost")
         self.control_connections.remove(protocol)
 
+
     def handshakeDone(self, results):
         log.msg("Handshake done! results=%s" % (results,))
 
-    def someError(self, failure):
+        self.pre_connections.remove(protocol)
+        self.control_connections.remove(protocol)
+
+
+    def cantFinishHandshake(self, protocol, failure):
+        self.pre_connections.remove(protocol)
         log.err("Error! %s" % failure)
         return failure
+
+
+

@@ -82,33 +82,7 @@ class ControlConnectionFactory(Factory):
         f.protocol = lambda: ControlProtocol(details, new_connection, connection_lost)
         return f
 
+    def connect(self, host, port):
+        return TCP4ClientEndpoint(reactor, host, port).connect(self)
 
 
-def connect(factory, host, port):
-    return TCP4ClientEndpoint(reactor, host, port).connect(factory)
-
-
-def main():
-
-    d = connect()
-
-    def connected(protocol):
-        return protocol.callRemote(
-            RegisterUser,
-            username = u'alice',
-            publickey = 'ssh-rsa AAAAB3NzaC1yc2 alice@actinium'
-        )
-    d.addCallback(connected)
-
-    def registered(result):
-        print 'Registration result:', result
-    d.addCallback(registered)
-
-    d.addErrback(err, "Failed to register")
-
-    def finished(ignored):
-        reactor.stop()
-    d.addCallback(finished)
-
-
-    reactor.run()
