@@ -3,9 +3,8 @@ var fs = require('fs'),
     async = require('async');
 
 var downloadsDir = './downloads';
-var stats = fs.statSync(downloadsDir);
 
-if (!stats.isDirectory()) {
+if (!fs.existsSync(downloadsDir) || !fs.statSync(downloadsDir).isDirectory()) {
     fs.mkdirSync(downloadsDir);
 }
 
